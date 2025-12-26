@@ -33,7 +33,7 @@ mypy_cache_updated = False
 try:  # If installed, check both versions of this class.
     from typing_extensions import Protocol as Protocol_ext
 except ImportError:  # pragma: no cover
-    Protocol_ext = Protocol  # type: ignore[assignment]
+    Protocol_ext = Protocol
 
 
 def _ensure_mypy_cache_updated() -> None:
@@ -243,16 +243,9 @@ def test_static_tool_sees_all_symbols(tool: str, modname: str, tmp_path: Path) -
         raise AssertionError()
 
 
-# this could be sped up by only invoking mypy once per module, or even once for all
-# modules, instead of once per class.
 @slow
 # see comment on test_static_tool_sees_all_symbols
 @pytest.mark.redistributors_should_skip
-@pytest.mark.skipif(
-    sys.version_info[:4] == (3, 14, 0, "beta"),
-    # 2 passes, 12 fails
-    reason="several tools don't support 3.14.0",
-)
 # Static analysis tools often have trouble with alpha releases, where Python's
 # internals are in flux, grammar may not have settled down, etc.
 @pytest.mark.skipif(
@@ -443,6 +436,10 @@ def test_static_tool_sees_class_members(
             extra = {e for e in extra if not e.endswith("AttrsAttributes__")}
             assert len(extra) == before - 1
 
+        if attrs.has(class_):
+            # dynamically created attribute by attrs?
+            missing.remove("__attrs_props__")
+
         # dir does not see `__signature__` on enums until 3.14
         if (
             tool == "mypy"
@@ -517,6 +514,11 @@ def test_static_tool_sees_class_members(
             and class_ in (trio.Path, trio.WindowsPath, trio.PosixPath)
         ):
             missing.remove("with_segments")
+
+        # tuple subclasses are weird
+        if issubclass(class_, tuple):
+            extra.remove("__reversed__")
+            missing.remove("__getnewargs__")
 
         if sys.version_info >= (3, 13) and attrs.has(class_):
             missing.remove("__replace__")

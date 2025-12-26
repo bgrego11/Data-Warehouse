@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -23,7 +23,7 @@ async def test_channel() -> None:
     with pytest.raises(ValueError, match=r"^max_buffer_size must be >= 0$"):
         open_memory_channel(-1)
 
-    s, r = open_memory_channel[Union[int, str, None]](2)
+    s, r = open_memory_channel[int | str | None](2)
     repr(s)  # smoke test
     repr(r)  # smoke test
 
@@ -362,7 +362,7 @@ async def test_statistics() -> None:
 async def test_channel_fairness() -> None:
     # We can remove an item we just sent, and send an item back in after, if
     # no-one else is waiting.
-    s, r = open_memory_channel[Union[int, None]](1)
+    s, r = open_memory_channel[int | None](1)
     s.send_nowait(1)
     assert r.receive_nowait() == 1
     s.send_nowait(2)
@@ -388,7 +388,7 @@ async def test_channel_fairness() -> None:
     # And the analogous situation for send: if we free up a space, we can't
     # immediately send something in it if someone is already waiting to do
     # that
-    s, r = open_memory_channel[Union[int, None]](1)
+    s, r = open_memory_channel[int | None](1)
     s.send_nowait(1)
     with pytest.raises(trio.WouldBlock):
         s.send_nowait(None)
@@ -434,7 +434,7 @@ async def test_as_safe_channel_broken_resource() -> None:
     @as_safe_channel
     async def agen() -> AsyncGenerator[int]:
         yield 1
-        yield 2
+        yield 2  # pragma: no cover
 
     async with agen() as recv_chan:
         assert await recv_chan.__anext__() == 1
@@ -519,16 +519,19 @@ async def test_as_safe_channel_genexit_finally() -> None:
 
     events: list[str] = []
     with RaisesGroup(
-        RaisesGroup(
-            Matcher(ValueError, match="^agen$"),
-            Matcher(TypeError, match="^iterator$"),
-        ),
-        match=r"^Encountered exception during cleanup of generator object, as well as exception in the contextmanager body - unable to unwrap.$",
-    ):
+        Matcher(ValueError, match="^agen$"),
+        Matcher(TypeError, match="^iterator$"),
+    ) as g:
         async with agen(events) as recv_chan:
             async for i in recv_chan:  # pragma: no branch
                 assert i == 1
                 raise TypeError("iterator")
+
+    if sys.version_info >= (3, 11):
+        assert g.value.__notes__ == [
+            "Encountered exception during cleanup of generator object, as "
+            "well as exception in the contextmanager body - unable to unwrap."
+        ]
 
     assert events == ["GeneratorExit()", "finally"]
 
@@ -553,6 +556,7 @@ async def test_as_safe_channel_nested_loop() -> None:
 async def test_as_safe_channel_doesnt_leak_cancellation() -> None:
     @as_safe_channel
     async def agen() -> AsyncGenerator[None]:
+        yield
         with trio.CancelScope() as cscope:
             cscope.cancel()
             yield
@@ -695,3 +699,52 @@ async def test_as_safe_channel_swallowing_extra_exceptions() -> None:
         async with agen(ValueError) as g:
             async for _ in g:
                 break
+
+
+async def test_as_safe_channel_close_between_iteration() -> None:
+    @as_safe_channel
+    async def agen() -> AsyncGenerator[None]:
+        while True:
+            yield
+
+    async with agen() as chan, trio.open_nursery() as nursery:
+
+        async def close_channel() -> None:
+            await trio.lowlevel.checkpoint()
+            await chan.aclose()
+
+        nursery.start_soon(close_channel)
+        with pytest.raises(trio.ClosedResourceError):
+            async for _ in chan:
+                pass
+
+
+async def test_as_safe_channel_close_before_iteration() -> None:
+    @as_safe_channel
+    async def agen() -> AsyncGenerator[None]:
+        raise AssertionError("should be unreachable")  # pragma: no cover
+        yield  # pragma: no cover
+
+    async with agen() as chan:
+        await chan.aclose()
+        with pytest.raises(trio.ClosedResourceError):
+            await chan.receive()
+
+
+async def test_as_safe_channel_close_during_iteration() -> None:
+    @as_safe_channel
+    async def agen() -> AsyncGenerator[None]:
+        yield
+        await chan.aclose()
+        while True:
+            yield
+
+    async with agen() as chan:
+        with pytest.raises(trio.ClosedResourceError):
+            async for _ in chan:
+                pass
+
+        # This is necessary to ensure that `chan` has been sent
+        # to. Otherwise, this test sometimes passes on a broken
+        # version of trio.
+        await trio.testing.wait_all_tasks_blocked()

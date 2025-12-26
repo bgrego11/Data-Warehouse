@@ -39,6 +39,9 @@ def fetch_span_text( url: str,css_selector: str, timeout: int = 10, headless: bo
         options.add_argument("--headless=new")
     options.add_argument("--disable-gpu")
     options.add_argument("--window-size=1920,1080")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-software-rasterizer")
 
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
@@ -106,6 +109,11 @@ def collate():
 # placeholder for db upload function and logging
 
 if __name__ == "__main__":
+    # Set pandas display options to show full dataframe
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.max_rows', None)
+    pd.set_option('display.width', None)
+    pd.set_option('display.max_colwidth', None)
+    
     df = collate()
     print(df)
-#     print(df)

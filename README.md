@@ -1,10 +1,20 @@
 # Crypto Scraper
 
-A Python script that scrapes BCrypto price data from CoinMarketCap using Selenium.
+A Python script that scrapes crypto price data from CoinMarketCap using Selenium.
 
 ## Prerequisites
 
-### 1. Install Python
+### Docker (Recommended)
+
+- Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- Ensure Docker is running before executing commands
+
+### Local Development (Alternative)
+
+<details>
+<summary>Click to expand local setup instructions</summary>
+
+#### 1. Install Python
 
 If you don't have Python installed on your machine, download it from [python.org](https://www.python.org/downloads/).
 
@@ -18,13 +28,47 @@ If you don't have Python installed on your machine, download it from [python.org
    python --version
    ```
 
-### 2. Install Google Chrome
+#### 2. Install Google Chrome
 
 Selenium requires Chrome to be installed. Download it from [google.com/chrome](https://www.google.com/chrome/).
 
-## Setup
+</details>
+
+## Running with Docker (Recommended)
 
 ### 1. Navigate to the Project Directory
+
+```powershell
+cd "C:\Users\YourUsername\Code Projects\Data Warehouse"
+```
+
+### 2. Build the Docker Image
+
+```powershell
+docker-compose build
+```
+
+### 3. Run the Scraper
+
+```powershell
+docker-compose up
+```
+
+The script will scrape crypto prices from CoinMarketCap and display the results in the terminal.
+
+### Alternative: Run with Docker Directly
+
+```powershell
+docker build -t crypto-scraper .
+docker run --rm crypto-scraper
+```
+
+## Running Locally (Without Docker)
+
+<details>
+<summary>Click to expand local development instructions</summary>
+
+### 1. Navigate to the Ingestion Directory
 
 ```powershell
 cd "Your Local Path\Data Warehouse\Ingestion"
@@ -50,23 +94,13 @@ You should see `(.venv)` appear in your PowerShell prompt, indicating the virtua
 pip install -r requirements.txt
 ```
 
-Or, if you don't have `requirements.txt`, install manually:
+### 5. Run the Script
 
 ```powershell
-pip install selenium webdriver-manager pandas
+python price_scraper.py
 ```
 
-## Running the Script
-
-Once the virtual environment is activated, run:
-
-```powershell
-python .\BTC_Scraper.py
-```
-
-The script will scrape the current BTC price from CoinMarketCap and display it.
-
-## Deactivating the Virtual Environment
+### 6. Deactivate the Virtual Environment
 
 When you're done, deactivate the virtual environment:
 
@@ -74,8 +108,16 @@ When you're done, deactivate the virtual environment:
 deactivate
 ```
 
+</details>
+
 ## Troubleshooting
 
+### Docker Issues
+- **Docker daemon not running**: Start Docker Desktop and wait for it to fully initialize
+- **Build fails**: Try `docker-compose build --no-cache` to rebuild from scratch
+- **Container exits immediately**: Check logs with `docker-compose logs`
+
+### Local Development Issues
 - **"python" is not recognized**: Make sure Python is in your PATH. Reinstall Python and check "Add Python to PATH" during setup.
 - **Chrome driver issues**: Ensure Google Chrome is installed on your machine.
 - **Module not found errors**: Make sure the virtual environment is activated and all dependencies are installed with `pip install -r requirements.txt`.

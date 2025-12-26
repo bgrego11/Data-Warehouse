@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import pathlib
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -51,8 +51,8 @@ def test_magic() -> None:
     assert bytes(path) == b"test"
 
 
-EitherPathType = Union[type[trio.Path], type[pathlib.Path]]
-PathOrStrType = Union[EitherPathType, type[str]]
+EitherPathType = type[trio.Path] | type[pathlib.Path]
+PathOrStrType = EitherPathType | type[str]
 cls_pairs: list[tuple[EitherPathType, EitherPathType]] = [
     (trio.Path, pathlib.Path),
     (pathlib.Path, trio.Path),
@@ -254,7 +254,7 @@ async def test_classmethods() -> None:
     assert isinstance(await trio.Path.home(), trio.Path)
 
     # pathlib.Path has only two classmethods
-    assert str(await trio.Path.home()) == os.path.expanduser("~")
+    assert str(await trio.Path.home()) == os.path.expanduser("~")  # noqa: ASYNC240
     assert str(await trio.Path.cwd()) == os.getcwd()
 
     # Wrapped method has docstring
