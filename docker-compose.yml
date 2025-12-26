@@ -8,7 +8,7 @@ services:
     container_name: crypto-price-scraper
     environment:
       - TZ=UTC
-    # Uncomment the following to mount a volume for data persistence
-    # volumes:
-    #   - ./data:/app/data
+    # Mount volume for log persistence
+    volumes:
+      - ./logs:/app/logs
     restart: "no"
