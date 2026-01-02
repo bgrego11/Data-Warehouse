@@ -39,7 +39,7 @@ Selenium requires Chrome to be installed. Download it from [google.com/chrome](h
 ### 1. Navigate to the Project Directory
 
 ```powershell
-cd "C:\Users\YourUsername\Code Projects\Data Warehouse"
+cd "{Path to the repo folder}\Data Warehouse"
 ```
 
 ### 2. Build the Docker Image
