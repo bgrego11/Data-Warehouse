@@ -2,6 +2,33 @@
 
 A Python script that scrapes crypto price data from CoinMarketCap using Selenium.
 
+## Getting Started
+
+### 1. Install Git
+
+Git is required to clone this repository. Download and install it from [git-scm.com](https://git-scm.com/).
+
+**Installation Steps:**
+- **macOS:** Use Homebrew: `brew install git` or download from [git-scm.com](https://git-scm.com/)
+- **Windows:** Download the installer from [git-scm.com](https://git-scm.com/) and follow the setup wizard
+- **Linux:** Use your package manager: `sudo apt-get install git` (Ubuntu/Debian) or `sudo yum install git` (CentOS/RHEL)
+
+Verify installation by running:
+```bash
+git --version
+```
+
+### 2. Clone the Repository
+
+Once Git is installed, clone this repository to your local machine:
+
+```bash
+git clone https://github.com/bgrego11/Data-Warehouse.git
+cd Data-Warehouse
+```
+
+
+
 ## Prerequisites
 
 ### Docker (Recommended)
@@ -39,7 +66,7 @@ Selenium requires Chrome to be installed. Download it from [google.com/chrome](h
 ### 1. Navigate to the Project Directory
 
 ```powershell
-cd "C:\Users\YourUsername\Code Projects\Data Warehouse"
+cd "{Path to the repo folder}\Data Warehouse"
 ```
 
 ### 2. Build the Docker Image
