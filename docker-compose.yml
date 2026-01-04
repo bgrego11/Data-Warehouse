@@ -6,6 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: crypto-price-scraper
+    env_file:
+      - .env
     environment:
       - TZ=UTC
     # Mount volume for log persistence

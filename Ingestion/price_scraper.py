@@ -6,6 +6,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -13,6 +14,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException
+from db_loader import load_data_to_db
+
+# Load environment variables from .env file
+load_dotenv(Path(__file__).parent.parent / '.env')
 
 
 # ============================================================================
@@ -205,10 +210,10 @@ def build_df(timestamp: datetime, price: str, ccy: str, source: str) -> pd.DataF
     """Package scraped data into a DataFrame row (timestamp, cleaned price, currency, source URL)."""
     price_float = clean_price(price)
     return pd.DataFrame({
-        'Timestamp': [timestamp],
-        'Price': [price_float],
-        'Currency': [ccy],
-        'Source': [source]
+        'timestamp': [timestamp],
+        'price': [price_float],
+        'currency': [ccy],
+        'source': [source]
     })
 
 
@@ -285,6 +290,21 @@ if __name__ == "__main__":
     try:
         df = collate()
         display_results(df)
+        
+        # Load data to database
+        db_host = os.getenv('DB_HOST')
+        db_port = os.getenv('DB_PORT')
+        db_name = os.getenv('DB_NAME')
+        db_user = os.getenv('DB_USER')
+        db_password = os.getenv('DB_PASSWORD')
+        
+        if all([db_host, db_port, db_name, db_user, db_password]):
+            db_url = f"mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+            logging.info("Loading data to database...")
+            load_data_to_db(df, 'crypto_prices', db_url)
+        else:
+            logging.warning("Database credentials not fully configured in .env - skipping database load")
+        
         logging.info("Script completed successfully")
     except Exception as e:
         logging.error(f"Script failed: {str(e)}")
