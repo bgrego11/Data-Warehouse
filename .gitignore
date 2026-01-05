@@ -28,10 +28,8 @@ logs/
 .DS_Store
 Thumbs.db
 
-# Data files (uncomment if needed)
-# *.csv
-# *.json
-# data/
+# Data files
+Ingestion/Historic Data/
 
 # Environment variables
 .env
